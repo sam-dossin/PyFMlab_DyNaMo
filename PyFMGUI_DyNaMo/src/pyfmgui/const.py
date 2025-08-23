@@ -11,6 +11,7 @@ pyFM_VERSION = "PyFMLab v.1.0.2"
 # FILE CONSTANTS ##################################################
 jpk_file_extensions = ('jpk-force', 'jpk-force-map', 'jpk-qi-data','jpk-qi-series')
 nanoscope_file_extensions = ('spm', 'pfc')
+jpk_h5_file = ('h5-jpk','JPK MultiScan Force Map Spectroscopy')                                        # As in 18-08-2025
 asylum_file_extensions = ('ARDF', 'ibw')
 
 # ANALYSIS CONSTANTS ##############################################

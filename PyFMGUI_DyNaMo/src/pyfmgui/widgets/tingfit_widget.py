@@ -166,7 +166,17 @@ class TingFitWidget(QtWidgets.QWidget):
                 rows, cols = shape[0], shape[1]
                 curve_coords = np.arange(cols*rows).reshape((cols, rows))
                 curve_coords = np.rot90(np.fliplr(curve_coords))
-
+            elif self.session.current_file.filemetadata['file_type'] in cts.jpk_h5_file:
+                #img = self.session.current_file.piezoimg
+                img = self.session.current_file.imagedata['CombinedHeightMeasured']
+                img = np.rot90(np.fliplr(img))
+                self.plotItem.setTitle("test Height (μm)")
+                shape = img.shape
+                rows, cols = shape[0], shape[1]
+                curve_coords = self.session.current_file.imagedata['coordinate']
+                curve_coords = np.rot90(np.fliplr(curve_coords))
+                curve_coords = curve_coords
+                
             self.correlogram.setImage(img)
             shape = img.shape
             rows, cols = shape[0], shape[1]
@@ -198,7 +208,7 @@ class TingFitWidget(QtWidgets.QWidget):
             pixels = vb.mapFromViewToItem(self.correlogram, items)
             x, y = int(pixels.x()), int(pixels.y())
             self.ROI.setPos(x, y)
-            self.session.current_curve_index = self.session.map_coords[x,y]
+            self.session.current_curve_index = int(self.session.map_coords[x,y])
             self.updatePlots()
             if self.session.data_viewer_widget is not None:
                 self.session.data_viewer_widget.ROI.setPos(x, y)

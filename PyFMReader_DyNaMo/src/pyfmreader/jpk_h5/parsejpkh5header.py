@@ -163,7 +163,7 @@ def parsejpkh5_header(file_path):
     # TODO pleaswe add this
     file_metadata['height_channel_key'] = 'Height'
     file_metadata['found_vDeflection'] = 'add this'
-    file_metadata['Entry_tot_nb_curve'] = 3852
+    file_metadata['Entry_tot_nb_curve'] = 1
 
     file_metadata["file_type"] = decode_byte_string(
         h5file.attrs["file-format-info"])
@@ -181,6 +181,16 @@ def parsejpkh5_header(file_path):
         pre_header = ".settings"
         file_metadata['force_volume'] = 1
 
+        # grid_position_pattern = GridPositionPattern.from_properties(
+        #     get_attributes_matching(
+        #         "multi-scan-series.map.header.position-pattern", top.attrs))
+
+        valid_indices = np.asarray(
+            h5file[top_group]["meta-data"]["valid-indices"]).flatten()
+        file_metadata['valid_indices'] = valid_indices
+
+        file_metadata['Entry_tot_nb_curve'] = len(valid_indices)
+
         file_metadata['image_path_dict'] = {'VDeflection': 'Measurement_000/AnalyzedImage/Channel_000/VDeflection',
                                             'MeasuredHeight': 'Measurement_000/AnalyzedImage/Channel_001/MeasuredHeight',
                                             'Height': 'Measurement_000/AnalyzedImage/Channel_002/Height',
@@ -197,6 +207,7 @@ def parsejpkh5_header(file_path):
         pre_header = ''
 
         file_metadata['force_volume'] = 1
+        file_metadata['Entry_tot_nb_curve'] = 1
 
     elif file_metadata['file_type'] == "JPK QNM MAP":
         # this is for QNM
@@ -207,6 +218,8 @@ def parsejpkh5_header(file_path):
 
         top_group = "Measurement_000/Map/Trace/"
         file_metadata['top_group'] = top_group
+
+        file_metadata['Entry_tot_nb_curve'] = 1
 
     attrs = read_clean_attrs(h5file[top_group])
     _sharedataprops = {key: val for key,
@@ -244,7 +257,8 @@ def parsejpkh5_header(file_path):
         prefix + ".position-pattern.grid.xcenter", offset_default)), 10)
     file_metadata['scan_grid_center_y'] = round(float(header_properties.get(
         prefix + ".position-pattern.grid.ycenter", offset_default)), 10)
-
+    file_metadata['position_pattern_type'] = header_properties.get(
+        prefix + ".position-pattern.type",'attribute')
     file_metadata['scan_numbering'] = header_properties.get(
         prefix + ".position-pattern.grid.numbering", offset_default)
 
@@ -254,8 +268,8 @@ def parsejpkh5_header(file_path):
     file_metadata["Recording_Z_close_loop_on"] = "On" if file_metadata["z_closed_loop"] else "Off"
 
     # TODO this needs to be fixed
-    file_metadata["Entry_tot_nb_curve"] = int(
-        header_properties.get(prefix + ".indexes.max", offset_default)) + 1
+    # file_metadata["Entry_tot_nb_curve"] = int(
+    #     header_properties.get(prefix + ".indexes.max", offset_default)) + 1
 
     file_metadata["extend_pause_duration"] = float(header_properties.get(
         prefix + ".settings.force-settings.extended-pause-time", offset_default))

@@ -25,7 +25,6 @@ def read_from_metadata(
     dataset = segment["meta-data"][ds_name]
     return np.asarray(dataset).flatten()
 
-
 def loadJPKh5curve(file_metadata, curve_index):
     """
     Function used to load the data of a single force curve from a JPK file.
@@ -48,8 +47,6 @@ def loadJPKh5curve(file_metadata, curve_index):
 
     force_curve = ForceCurve(curve_index, file_id)
 
-    segment_meta = file_metadata['segment_meta']
-
     curve_indices = file_metadata["Entry_tot_nb_curve"] - 1
 
     index = 1 if curve_indices == 0 else 3
@@ -57,14 +54,14 @@ def loadJPKh5curve(file_metadata, curve_index):
     h5file = h5py.File(file_path, 'r')
 
     h5file_top = h5file[top_group]
+    segment_meta = file_metadata['segment_meta']
+
     datasets = [segment_meta[i]['name'] for i in segment_meta]
-    segments = [[h5file_top[f"{d}/"], d] for d in datasets]
-    print(segments)
-    # channel_name = 'VDeflection'
-    segment_formated_data = {}
-    for seg_id, (seg_group, seg_type) in enumerate(segments, start=0):
-        print(seg_type,seg_id)
-        segment_type = seg_type
+    segments_h5 = [[h5file_top[f"{d}/"], d] for d in datasets]
+    for seg_id in range(len(segments_h5)):
+        segment_formated_data = {}
+
+        seg_group, seg_type = segments_h5[seg_id]
         segment_duration = read_from_metadata(
             seg_group, "duration")[curve_index]
         segment_num_points = read_from_metadata(
@@ -94,7 +91,7 @@ def loadJPKh5curve(file_metadata, curve_index):
             else:
                 print("[!] No encoders found check JPK's script")
 
-            segment_formated_data[height_channel_key] = values
+            segment_formated_data[height_channel_key] = -1*values
 
         else:
             print("[!] No valid height channel found!")
@@ -116,15 +113,14 @@ def loadJPKh5curve(file_metadata, curve_index):
                     raw_data + conversion_factors['offset']
 
                 if conversion_factors['unit.unit'] == 'N':
-                    values = values
                     # this is to get teh vdeflection in V from N
-                    # values = values * 1e-09 / \
-                    #     file_metadata['spring_const_Nbym'] * \
-                    #     file_metadata['defl_sens_nmbyV']
+                    k_sens_in_si = file_metadata['spring_const_Nbym'] * \
+                        file_metadata['defl_sens_nmbyV'] * 1e-09
+                    values = values/k_sens_in_si
             else:
                 print("[!] No encoders found check JPK's script")
 
-            segment_formated_data['vDeflection'] = raw_data
+            segment_formated_data['vDeflection'] = values
 
             # conversion_factors = file_metadata["channel_properties"][vDeflection_channel_key]
 
@@ -134,24 +130,14 @@ def loadJPKh5curve(file_metadata, curve_index):
         # TODO mutiple segments of the same type
         # TODO pause and modulation
 
-        if segment_type == 'pause':
-            segment_type = 'Pause'
-        elif segment_type == 'modulation':
-            segment_type = 'Modulation'
-
-        segment = Segment(file_id, seg_id, segment_type)
+        segment = Segment(file_id, seg_id, seg_type)
         segment.segment_formated_data = segment_formated_data
-        segment.segment_type = segment_type
         # TODO do i need to store raw data?
         segment.segment_raw_data = segment_formated_data
         # TODO what is this segment metadata
-        # segment.segment_metadata = curve_properties[str(
-        #     curve_index)][segment_id]
-        # segment.velocity = segment.segment_metadata["ramp_speed"]
-        # segment.sampling_rate = segment.nb_point / \
-        #     segment.segment_metadata["duration"]
-        # segment.z_displacement = segment.segment_metadata["ramp_size"]
-
+        segment.segment_metadata = segment_meta[seg_id]
+        segment.segment_metadata["duration"] = segment_duration
+        segment.segment_metadata["baseline_measured"] = False
         # TODO what is this JPK_SETPOINT_MODE
         segment.force_setpoint_mode = JPK_SETPOINT_MODE
 
@@ -159,16 +145,22 @@ def loadJPKh5curve(file_metadata, curve_index):
         segment.nb_col = len(segment_formated_data.keys())
         segment.force_setpoint = file_metadata["force_setpoint"]
 
+        segment.velocity = float(segment_meta[seg_id]["environment.feedback-mode.approach-feedback-settings.velocity"])
+        segment.sampling_rate = segment.nb_point / \
+             segment.segment_metadata["duration"]
+        #TODO move this to parse
+        segment_meta[seg_id]["ramp_size"] = float(segment_meta[seg_id]['settings.segment-settings.z-end'])-float(segment_meta[seg_id]['settings.segment-settings.z-start'])
+        segment.z_displacement = segment.segment_metadata["ramp_size"]
         if segment.segment_type == "Extend":
-
             force_curve.extend_segments.append(
                 (int(segment.segment_id), segment))
-            # break
             # storing z at setpoint
-            # force_curve.z_at_setpoint = segment.segment_formated_data[height_channel_key][-1]
+            force_curve.z_at_setpoint = segment.segment_formated_data[height_channel_key][-1]
         elif segment.segment_type == "Retract":
+
             force_curve.retract_segments.append(
                 (int(segment.segment_id), segment))
+
         elif segment.segment_type == "Pause":
             force_curve.pause_segments.append(
                 (int(segment.segment_id), segment))
@@ -176,11 +168,5 @@ def loadJPKh5curve(file_metadata, curve_index):
             force_curve.modulation_segments.append(
                 (int(segment.segment_id), segment))
     h5file.close()
-    plt.figure(1)
-    for segid, segment in force_curve.get_segments():
-        print(segid, segment.segment_type)
-        print(segment.segment_formated_data.keys())
-        plt.plot(segment.segment_formated_data['time'],
-                 segment.segment_formated_data['vDeflection'])
-    plt.show()
+
     return force_curve
