@@ -8,13 +8,11 @@ Created on Thu Aug 21 14:14:55 2025
 
 # %%
 import matplotlib.pyplot as plt
-import seaborn as sns
 from .parsejpkh5header import get_attributes_matching,properties_section
 import numpy as np
 from typing import Any, Iterator, NoReturn, cast, Union, Dict
 from abc import ABC, abstractmethod
 import h5py
-# from jpk_h5.parsejpkh5header import properties_section, get_attributes_matching
 
 
 class Grid:
@@ -233,54 +231,3 @@ def get_valid_position(grid_position_pattern, valid_indices, valid_idx: int) -> 
     return grid_position_pattern.get_position(grid_idx)
 
 
-# %%
-# prop = get_attributes_matching(
-#     "multi-scan-series.map.header.position-pattern", top.attrs)
-
-# grid_section = properties_section(prop, "grid")
-
-# file_path = '/Users/yogehs/Documents/ATIP_PhD/CTC_mech_data/AFM/20250811_CTC45/sample1/smart-rectangle5-2025.08.11-15.51.01.680.h5-jpk'
-
-# uff = loadfile(file_path)
-# file_metadata = uff.filemetadata
-# h5file = h5py.File(file_path, "r")
-# top_group = file_metadata['top_group']
-# top = h5file[top_group]
-# positions = top["Position_Values"]
-
-# grid_position_pattern = GridPositionPattern.from_properties(
-#     get_attributes_matching(
-#         "multi-scan-series.map.header.position-pattern", top.attrs))
-
-# valid_indices_ds = top["meta-data"]["valid-indices"]
-# valid_indices = np.asarray(top["meta-data"]["valid-indices"]).flatten()
-
-
-# # %%
-# valid_idx = 0
-# grid_idx = valid_indices[valid_idx]
-# print(grid_position_pattern.get_position(grid_idx), 'position')
-# print(grid_position_pattern.get_idx(grid_idx), 'index')
-
-# # get_valid_position(grid_position_pattern, valid_indices, 4000)
-
-# # %%position array
-# coords = np.full((file_metadata["num_y_pixels"],
-#                  file_metadata["num_x_pixels"]), np.nan)
-
-# for valid_idx in range(file_metadata["Entry_tot_nb_curve"]):
-#     grid_idx = file_metadata['valid_indices'][valid_idx]
-#     [i, j] = grid_position_pattern.get_idx(grid_idx)
-#     # print(grid_position_pattern.get_idx(grid_idx), 'index')
-#     coords[j][i] = valid_idx
-#     # filemetadata["num_y_pixels"], UFF.filemetadata["num_x_pixels"]
-
-
-# fig, ax = plt.subplots(figsize=(12, 10), dpi=200)
-# sns.heatmap(uff.imagedata['Slope'], vmin=0.000, vmax=0.004,
-#             annot=coords, fmt="", annot_kws={"size": 2}, ax=ax)
-# plt.title('Slope')
-# ax.invert_yaxis()
-# # plt.show()
-
-# plt.savefig("heatmap.svg", format="svg", bbox_inches="tight", dpi=300)
