@@ -93,7 +93,7 @@ def find_coordinate(filemetadata, grid_position_pattern):
 
     # Assign all values at once
     coords[j_arr, i_arr] = np.arange(len(valid_indices))
-    coords = np.where(np.isnan(coords), np.nan, np.rint(coords).astype(int))
+    #coords = np.where(np.isnan(coords), np.nan, np.rint(coords).astype(int))
 
     #coords = np.where(np.isnan(coords), np.nan, np.rint(coords).astype(int))
     return coords

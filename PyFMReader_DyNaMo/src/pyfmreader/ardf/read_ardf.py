@@ -315,8 +315,3 @@ def read_ardf_metadata(filename):
 
 
 
-# filename = "/home/clotis/MyUnixWorkplace/exchange_work/format_UFF/test/ForceMap03.ARDF" 
-# data = read_ardf_metadata(filename)
-# print(float(file_struct['Notes']['SpringConstant']))
-# print(data)
-# print("Available groups:", list(data["groups"].keys()))

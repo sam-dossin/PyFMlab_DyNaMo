@@ -9,7 +9,7 @@ import tifffile
 # Import for multiprocessing
 import concurrent.futures
 from functools import partial
-
+from pyfmreader import loadfile
 result_types = [
     'hertz_results',
     'ting_results', 
@@ -224,17 +224,18 @@ def export_results(results, dirname, file_prefix):
     return success_flag
 
 
-def find_piezo_coord(nx,ny,file_ext = ''):
-    
+def find_piezo_coord(nx,ny,file_path = ''):
+    file_ext = file_path.split(os.extsep)[-1]
+
     piezoimg_corrd = np.arange(nx*ny).reshape((ny, nx))
-    
     if file_ext =='jpk-force-map':
         
         piezoimg_corrd = np.asarray([row[::(-1)**i] for i, row in enumerate(piezoimg_corrd)])
-
-    #map_corrd_2D = np.rot90(np.fliplr(piezoimg_corrd))
-    map_corrd_2D = np.rot90(piezoimg_corrd,k=-1)
-
+    elif file_ext == 'h5-jpk':
+        h5_uff = loadfile(file_path)
+        piezoimg_corrd = h5_uff.imagedata['coordinate']
+    
+    map_corrd_2D = np.rot90(np.fliplr(piezoimg_corrd))
     map_corrd_lin = map_corrd_2D.flatten()
     return map_corrd_2D, map_corrd_lin
     
@@ -249,11 +250,12 @@ def tiff_results(df_fileid, dirname, file_prefix, result_type):
     first_row = df_fileid.iloc[0]
     name = first_row['file_id']
     extension = name.split('.')[-1]
+    file_path =first_row['file_path'] 
     nx, ny = json.loads(first_row['map_size_x_y_pixels'])
     scan_size_x, scan_size_y = json.loads(first_row['scan_size_x_y_m'])
 
     Param1_lin = np.nan * np.ones(nx * ny)
-    _, map_corrd_lin = find_piezo_coord(nx, ny, extension)
+    _, map_corrd_lin = find_piezo_coord(nx, ny, file_path)
     N_curve = len(map_corrd_lin)
 
     # Assign result field names only once
@@ -279,8 +281,8 @@ def tiff_results(df_fileid, dirname, file_prefix, result_type):
                 Param1_lin[i] = df_found[res].iloc[0]
 
         # Reshape and flip maps
-        Map_2d_1 = np.reshape(Param1_lin, (ny, nx))
-        #Map_2d_1 = np.flipud(Map_2d_1)
+        Map_2d_1 = np.reshape(Param1_lin, (nx, ny))
+        Map_2d_1 = np.flipud(Map_2d_1)
 
         # Save TIFFs if arrays are valid
         if Map_2d_1 is not None:
