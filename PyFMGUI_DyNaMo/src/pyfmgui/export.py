@@ -262,12 +262,13 @@ def tiff_results(df_fileid, dirname, file_prefix, result_type):
     result_id_1 = None
     result_id_2 = None
     if result_type == 'hertz_results':
-        df_fileid['log10_hertz_E'] = np.log10(df_fileid['hertz_E'].to_numpy())
-        results_id = ['hertz_E', 'hertz_delta0','z_at_setpoint']
+        df_fileid['log10_hertz_E'] = np.log10(
+            df_fileid["hertz_E"].replace(0, np.nan)).to_numpy()
+        results_id = ['log10_hertz_E','hertz_E', 'hertz_delta0','z_at_setpoint']
     elif result_type == 'ting_results':
-        print(result_type)
-        df_fileid['log10_ting_E0'] = np.log10(df_fileid['ting_E0'].to_numpy())
-        results_id = ['ting_E0', 'ting_betaE','z_at_setpoint']
+        df_fileid['log10_ting_E0'] = np.log10(
+            df_fileid["ting_E0"].replace(0, np.nan)).to_numpy()
+        results_id = ['log10_ting_E0','ting_E0', 'ting_betaE','z_at_setpoint']
     else:
         #results_id = None
         # Unknown result_type
@@ -302,8 +303,6 @@ def export_to_tiff(res, dirname, file_prefix, result_type):
         group_file = res.groupby(by='file_id')
     
         for name, df_fileid in group_file:
-            # hertz_colums = [s for s in df_fileid.columns if s.startswith('hertz')]
-            # if len(hertz_colums) >1:
             success_check = tiff_results(df_fileid, dirname, file_prefix, result_type)
             if success_check > 1:
                 success_flag = True
