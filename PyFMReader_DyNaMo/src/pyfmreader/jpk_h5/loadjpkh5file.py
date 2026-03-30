@@ -23,7 +23,7 @@ def loadJPKh5file(filepath, UFF):
     UFF.isFV = bool(UFF.filemetadata["force_volume"])
 
     UFF.filemetadata['found_vDeflection'] = True
-    UFF.filemetadata['height_channel_key'] = "Height"
+    UFF.filemetadata['height_channel_key'] = "CombinedHeightMeasured"
     UFF.filemetadata['deflection_chanel_key'] = "VDeflection"
     UFF.imagedata = loadJPKimg_h5(UFF.filemetadata)
 

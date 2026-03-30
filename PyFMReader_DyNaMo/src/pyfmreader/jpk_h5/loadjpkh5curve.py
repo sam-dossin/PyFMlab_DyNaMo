@@ -25,6 +25,7 @@ def read_from_metadata(
     dataset = segment["meta-data"][ds_name]
     return np.asarray(dataset).flatten()
 
+
 def loadJPKh5curve(file_metadata, curve_index):
     """
     Function used to load the data of a single force curve from a JPK file.
@@ -56,12 +57,19 @@ def loadJPKh5curve(file_metadata, curve_index):
     h5file_top = h5file[top_group]
     segment_meta = file_metadata['segment_meta']
 
-    datasets = [segment_meta[i]['name'] for i in segment_meta]
-    segments_h5 = [[h5file_top[f"{d}/"], d] for d in datasets]
+    if h5file_top.get('Segment0') is not None:
+        datasets = [f'Segment{i}' for i in segment_meta]
+
+    elif h5file_top.get('Extend') is not None:
+        datasets = [segment_meta[i]['name'] for i in segment_meta]
+    segments_h5 = [h5file_top[f"{d}/"] for d in datasets]
+
     for seg_id in range(len(segments_h5)):
         segment_formated_data = {}
 
-        seg_group, seg_type = segments_h5[seg_id]
+        seg_group = segments_h5[seg_id]
+
+        seg_type = segment_meta[seg_id]['name']
         segment_duration = read_from_metadata(
             seg_group, "duration")[curve_index]
         segment_num_points = read_from_metadata(
@@ -73,7 +81,6 @@ def loadJPKh5curve(file_metadata, curve_index):
 
         # Transform Height data
         if height_channel_key is not None:
-
             group, raw_data_all = _get_matching_data_set(
                 seg_group, height_channel_key)
             raw_data = np.asarray(
@@ -145,11 +152,13 @@ def loadJPKh5curve(file_metadata, curve_index):
         segment.nb_col = len(segment_formated_data.keys())
         segment.force_setpoint = file_metadata["force_setpoint"]
 
-        segment.velocity = float(segment_meta[seg_id]["environment.feedback-mode.approach-feedback-settings.velocity"])
+        segment.velocity = float(
+            segment_meta[seg_id]["environment.feedback-mode.approach-feedback-settings.velocity"])
         segment.sampling_rate = segment.nb_point / \
-             segment.segment_metadata["duration"]
-        #TODO move this to parse
-        segment_meta[seg_id]["ramp_size"] = float(segment_meta[seg_id]['settings.segment-settings.z-end'])-float(segment_meta[seg_id]['settings.segment-settings.z-start'])
+            segment.segment_metadata["duration"]
+        # TODO move this to parse
+        segment_meta[seg_id]["ramp_size"] = float(segment_meta[seg_id]['settings.segment-settings.z-end'])-float(
+            segment_meta[seg_id]['settings.segment-settings.z-start'])
         segment.z_displacement = segment.segment_metadata["ramp_size"]
         if segment.segment_type == "Extend":
             force_curve.extend_segments.append(
