@@ -2,7 +2,7 @@
 
 # File extensions of files supported by this library
 jpkfiles = ('jpk-force', 'jpk-force-map', 'jpk-qi-data','jpk-qi-series')        # As in 18-07-2022
-jpk_h5_file = ('h5-jpk','JPK MultiScan Force Map Spectroscopy')                                        # As in 18-08-2025
+jpk_h5_file = ('h5-jpk','JPK MultiScan Force Map Spectroscopy','JPK MultiScan Force Spectroscopy')                                        # As in 18-08-2025
 nanoscfiles = ('spm', 'pfc')                                    # As in 18-07-2022
 ufffiles = ('uff')                                              # As in 18-07-2022
 jpkthermalfiles = ('tnd')                                       # As in 18-07-2022

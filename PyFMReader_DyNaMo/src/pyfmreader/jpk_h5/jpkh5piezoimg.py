@@ -28,34 +28,38 @@ def loadJPKimg_h5(filemetadata):
     image_paths = filemetadata['image_path_dict']
     file = filemetadata['file_path']
     top_group = filemetadata['top_group']
+    data = {}
 
     if file_type in 'JPK MultiScan Force Spectroscopy':
-        return
 
-    data = {}
-    with h5py.File(file, "r") as h5file:
-        top_attrs = h5file[top_group].attrs
+        data['coordinate'] = np.arange(0,filemetadata["Entry_tot_nb_curve"]).reshape((filemetadata["num_y_pixels"],filemetadata["num_x_pixels"]))
+        #TODO needs to updated, to the pizeo image
+        data['CombinedHeightMeasured'] = np.arange(0,filemetadata["Entry_tot_nb_curve"]).reshape((filemetadata["num_y_pixels"],filemetadata["num_x_pixels"]))
+    
+    elif file_type == 'JPK MultiScan Force Map Spectroscopy':
+        with h5py.File(file, "r") as h5file:
+            top_attrs = h5file[top_group].attrs
 
-        for name, path in image_paths.items():
-            # print(name)
-            image_arr = h5file[path][:]
+            for name, path in image_paths.items():
+                # print(name)
+                image_arr = h5file[path][:]
 
-            image_2D = image_arr.reshape(
-                (filemetadata["num_y_pixels"], filemetadata["num_x_pixels"]))
-            data[name] = image_2D
-        # file_metadata['position_pattern_type']
-        if filemetadata["position_pattern_type"] != 'attribute':
-            grid_position_pattern = GridPositionPattern.from_properties(
-                get_attributes_matching(
-                    "multi-scan-series.map.header.position-pattern", top_attrs))
-            data['coordinate'] = find_coordinate(
-                filemetadata, grid_position_pattern)
-            # data['coordinate'] = 'helo'
-        elif "coordinates" in h5file[top_group]['Position_Values'].attrs:
-            print(
-                "return AttributePositionHelper(h5_file, top_group) need to work on this part")
-        else:
-            print('return AttributePositionHelper with possition might be incorrect')
+                image_2D = image_arr.reshape(
+                    (filemetadata["num_y_pixels"], filemetadata["num_x_pixels"]))
+                data[name] = image_2D
+            # file_metadata['position_pattern_type']
+            if filemetadata["position_pattern_type"] != 'attribute':
+                grid_position_pattern = GridPositionPattern.from_properties(
+                    get_attributes_matching(
+                        "multi-scan-series.map.header.position-pattern", top_attrs))
+                data['coordinate'] = find_coordinate(
+                    filemetadata, grid_position_pattern)
+                # data['coordinate'] = 'helo'
+            elif "coordinates" in h5file[top_group]['Position_Values'].attrs:
+                print(
+                    "return AttributePositionHelper(h5_file, top_group) need to work on this part")
+            else:
+                print('return AttributePositionHelper with possition might be incorrect')
 
     return data
 
@@ -112,16 +116,26 @@ def computeJPKPiezoImg_h5(UFF, pizeo_channel='MeasuredHeight'):
     file_type = UFF.filemetadata['file_type']
     if file_type == 'JPK MultiScan Force Map Spectroscopy':
         pizeo_channel = 'CombinedHeightMeasured'
-    else:
-        print("what hell is the channel name here ", file_type)
-    image_path = UFF.filemetadata['image_path_dict'][pizeo_channel]
-    with h5py.File(file_path, "r") as h5file:
+        image_path = UFF.filemetadata['image_path_dict'][pizeo_channel]
+        with h5py.File(file_path, "r") as h5file:
 
-        tempiezoimg = h5file[image_path][:]
-        # TODO is this needed
-        piezoimg = tempiezoimg - np.nanmin(tempiezoimg)
+            tempiezoimg = h5file[image_path][:]
+            # TODO is this needed
+            piezoimg = tempiezoimg - np.nanmin(tempiezoimg)
+            # Reshape piezo image
+            piezoimg = piezoimg.reshape(
+                (UFF.filemetadata["num_y_pixels"], UFF.filemetadata["num_x_pixels"]))
+
+    elif file_type == 'JPK MultiScan Force Spectroscopy':
+        #print("what hell is the channel name here ", file_type)
+        #piezoimg = tempiezoimg - np.nanmin(tempiezoimg)
+        piezoimg = np.zeros(UFF.filemetadata["Entry_tot_nb_curve"])
+        for i in range(UFF.filemetadata["Entry_tot_nb_curve"]):
+            FC = UFF.getcurve(i)
+            piezoimg[i] = FC.z_at_setpoint
         # Reshape piezo image
         piezoimg = piezoimg.reshape(
-            (UFF.filemetadata["num_y_pixels"], UFF.filemetadata["num_x_pixels"]))
+            (UFF.filemetadata["num_y_pixels"],UFF.filemetadata["num_x_pixels"]))
+        UFF.imagedata[pizeo_channel] = piezoimg
 
     return piezoimg

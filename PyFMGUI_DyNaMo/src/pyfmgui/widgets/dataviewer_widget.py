@@ -202,7 +202,6 @@ class DataViewerWidget(QtWidgets.QWidget):
                 shape = img.shape
                 rows, cols = shape[0], shape[1]
                 curve_coords = self.session.current_file.imagedata['coordinate']
-                                #curve_coords = curve_coords
                 curve_coords = np.rot90(np.fliplr(curve_coords))
 
                 curve_coords = curve_coords

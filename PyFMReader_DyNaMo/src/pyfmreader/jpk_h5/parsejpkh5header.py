@@ -202,13 +202,15 @@ def parsejpkh5_header(file_path):
         # this is for smart points
         top_group = "Measurement_000/"
         file_metadata['top_group'] = top_group
-
+    
         prefix = 'multi-scan-series.header'
         pre_header = ''
-
         file_metadata['force_volume'] = 1
-        file_metadata['Entry_tot_nb_curve'] = 1
-
+        #defining as a row of points to make it easier
+        file_metadata['Entry_tot_nb_curve'] = int(h5file[f"{top_group}/Position_Indices"][:].shape[0])
+        file_metadata["num_x_pixels"] = file_metadata['Entry_tot_nb_curve']
+        file_metadata["num_y_pixels"] = 1
+        file_metadata["point_position_values"] = h5file[f"{top_group}/Position_Values"][:]
     elif file_metadata['file_type'] == "JPK QNM MAP":
         # this is for QNM
         # TODO define this prefix
@@ -218,7 +220,7 @@ def parsejpkh5_header(file_path):
 
         top_group = "Measurement_000/Map/Trace/"
         file_metadata['top_group'] = top_group
-
+        #TODO needs to optimized and added 
         file_metadata['Entry_tot_nb_curve'] = 1
 
     attrs = read_clean_attrs(h5file[top_group])
@@ -243,11 +245,12 @@ def parsejpkh5_header(file_path):
 
     file_metadata["scan_angle"] = float(header_properties.get(
         prefix + ".position-pattern.grid.theta", default_angle))
-
-    file_metadata["num_x_pixels"] = int(header_properties.get(
-        prefix + ".position-pattern.grid.ilength", multiplier_default))
-    file_metadata["num_y_pixels"] = int(header_properties.get(
-        prefix + ".position-pattern.grid.jlength", multiplier_default))
+    if file_metadata['file_type'] != "JPK MultiScan Force Spectroscopy":
+        #since it is already assigned in the above code block.
+        file_metadata["num_x_pixels"] = int(header_properties.get(
+            prefix + ".position-pattern.grid.ilength", multiplier_default))
+        file_metadata["num_y_pixels"] = int(header_properties.get(
+            prefix + ".position-pattern.grid.jlength", multiplier_default))
     # the scan size is now stored in meters
     file_metadata["scan_size_x"] = round(float(header_properties.get(
         prefix + ".position-pattern.grid.ulength", offset_default)), 10)

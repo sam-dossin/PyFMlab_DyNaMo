@@ -121,6 +121,14 @@ def get_file_results(result_type, file_metadata_and_results):
     file_results = []
     for curve_result in file_result:
         curve_indx = curve_result[0]
+        if filemetadata['file_type']=='JPK MultiScan Force Spectroscopy':
+            #this is for smart points to export the coordinates of measurement in the CSV files 
+            # cruve position in m (for both jpk and nanscope files) 
+            #TODO could be impoved or the positions needs to be checked
+            scan_x_size = float(filemetadata.get('point_position_values')[curve_indx][0])
+            scan_y_size = float(filemetadata.get('point_position_values')[curve_indx][1])
+            scan_size_m = json.dumps([scan_x_size,scan_y_size])
+
         row_dict = {
             'file_path': file_path, 'file_id': file_id, 
             'curve_idx': curve_indx ,'kcanti': k, 'defl_sens': defl_sens,
