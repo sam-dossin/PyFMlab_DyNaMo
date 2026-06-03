@@ -29,7 +29,7 @@ def loadNANOSCcurve(idx, header):
     with open(filepath, 'rb') as afmfile:
         # Get variables needed for loading data from header
         isFV = bool(header['force_volume'])
-        isPFC = bool(header['peakforce'])
+        isPFC = bool(header.get('peakforce', False)) # added by FR for nanoscope files version<9
         FDC_data_length = header['FDC_data_length']
         FDC_nb_sampsline = header['FDC_nb_sampsline']
         nb_point_approach = header['nb_point_approach']
