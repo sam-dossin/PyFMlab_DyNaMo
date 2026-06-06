@@ -12,7 +12,7 @@ from .hs3.loadHS3file import loadHS3file
 from .ardf.loadARDFfile import loadARDFfile
 from .ardf.loadibwfile import loadIBWfile
 from .load_uff import loadUFFtxt
-from .jpk_h5.loadjpkh5file import loadJPKh5file
+#from .jpk_h5.loadjpkh5file import loadJPKh5file
 from .uff import UFF
 from nptdms import TdmsFile
 
