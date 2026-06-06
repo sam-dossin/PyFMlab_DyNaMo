@@ -35,7 +35,7 @@ def parseJPKheader(filepath, header_properties, shared_data_properties, filesuff
         file_metadata["file_id"] = file_id.group(1)
     else:
         # If the file has been renamed, then assign the file id to be the file name.
-        file_metadata["file_id"] = file_metadata["Entry_filename"]
+        file_metadata["file_id"] = os.path.basename(filepath)
 
     if file_metadata["file_type"] == "jpk-force-map":
         prefix = "force-scan-map"
